@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="ja" class="h-full">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rubik's Cube Timer Summary</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js for graphs -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Supabase JS SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* ダブルスライダー用のスタイルハック */
+        input[type=range]::-webkit-slider-thumb {
+            pointer-events: auto;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #818cf8;
+            border: 3px solid #fff;
+            cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+        }
+
+        input[type=range]::-moz-range-thumb {
+            pointer-events: auto;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #818cf8;
+            border: 3px solid #fff;
+            cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+
+<body class="bg-slate-900 text-slate-100 h-full flex flex-col">
+    <header class="bg-slate-800 border-b border-slate-700 px-6 py-4 flex items-center justify-between shrink-0">
+        <div class="flex items-center space-x-3">
+            <div class="bg-indigo-600 p-2 rounded-xl text-white">
+                <i data-lucide="timer" class="w-6 h-6"></i>
+            </div>
+            <h1 class="text-xl font-bold tracking-tight">Rubik's Cube Summary</h1>
+        </div>
+        <button id="open-settings"
+            class="flex items-center space-x-2 bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+            <i data-lucide="settings" class="w-4 h-4"></i>
+            <span>Supabase 設定</span>
+        </button>
+    </header>
+
+    <main class="flex-1 overflow-y-auto p-4 md:p-8 max-w-7xl mx-auto w-full space-y-6">
+
+        <!-- Tab Navigation -->
+        <div class="flex border-b border-slate-700/60 mb-6 space-x-8 px-2">
+            <button id="tab-btn-personal"
+                class="pb-3 font-bold text-sm text-indigo-400 border-b-2 border-indigo-500 transition-colors">
+                <div class="flex items-center space-x-2">
+                    <i data-lucide="user" class="w-4 h-4"></i>
+                    <span>個人分析</span>
+                </div>
+            </button>
+            <button id="tab-btn-ranking"
+                class="pb-3 font-medium text-sm text-slate-400 border-b-2 border-transparent hover:text-slate-300 transition-colors">
+                <div class="flex items-center space-x-2">
+                    <i data-lucide="trophy" class="w-4 h-4"></i>
+                    <span>全体ランキング</span>
+                </div>
+            </button>
+        </div>
+
+        <!-- Personal Section -->
+        <div id="section-personal" class="space-y-6">
+            <!-- User & Solve Type Selection Section -->
+            <div
+                class="bg-slate-800/80 border border-slate-700/60 p-6 rounded-2xl shadow-sm backdrop-blur flex flex-col md:flex-row items-center gap-6">
+                <!-- User Select -->
+                <div class="flex items-center space-x-3 w-full md:w-1/2">
+                    <div class="bg-indigo-600/20 p-2.5 rounded-xl text-indigo-400 shrink-0">
+                        <i data-lucide="user" class="w-6 h-6"></i>
+                    </div>
+                    <div class="w-full">
+                        <label class="block text-xs text-slate-400 mb-1">ユーザー</label>
+                        <select id="user-select"
+                            class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-200 focus:outline-none focus:border-indigo-500">
+                            <option value="">-- ユーザーを選択 --</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Solve Type Select -->
+                <div class="flex items-center space-x-3 w-full md:w-1/2">
+                    <div class="bg-sky-600/20 p-2.5 rounded-xl text-sky-400 shrink-0">
+                        <i data-lucide="box" class="w-6 h-6"></i>
+                    </div>
+                    <div class="w-full">
+                        <label class="block text-xs text-slate-400 mb-1">ソルブタイプ</label>
+                        <select id="type-select"
+                            class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-200 focus:outline-none focus:border-indigo-500">
+                            <option value="">すべてのソルブタイプ</option>
+                            <option value="完全十字">完全十字</option>
+                            <option value="完全一面">完全一面</option>
+                            <option value="F2L">F2L</option>
+                            <option value="OLL">OLL</option>
+                            <option value="PLL(LBL)">PLL(LBL)</option>
+                            <option value="PLL(CFOP)">PLL(CFOP)</option>
+                            <option value="5x5x5">5x5x5</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Initial/Empty State Notice -->
+            <div id="initial-notice"
+                class="bg-slate-800/40 border border-dashed border-slate-700 p-12 rounded-2xl text-center space-y-3">
+                <div
+                    class="w-12 h-12 bg-slate-800 rounded-full flex items-center justify-center mx-auto text-slate-400">
+                    <i data-lucide="arrow-up" class="w-6 h-6"></i>
+                </div>
+                <h3 class="text-lg font-medium text-slate-300">ユーザーが選択されていません</h3>
+                <p class="text-sm text-slate-500 max-w-md mx-auto">上のプルダウンからユーザーを選択すると、そのユーザーの測定サマリーやグラフが表示されます。</p>
+            </div>
+
+            <!-- Dashboard Content (Hidden until user selected) -->
+            <div id="dashboard-content" class="space-y-6 hidden">
+
+                <!-- Data Range Slider -->
+                <div class="bg-slate-800/80 border border-slate-700/60 p-6 rounded-2xl shadow-sm backdrop-blur">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                        <div>
+                            <h3 class="font-semibold text-lg flex items-center space-x-2">
+                                <i data-lucide="calendar" class="w-5 h-5 text-indigo-400"></i>
+                                <span>データ適用期間</span>
+                            </h3>
+                            <p class="text-xs text-slate-400 mt-1">集計やグラフに反映する期間を指定します</p>
+                        </div>
+                        <div
+                            class="bg-slate-900 px-4 py-2 rounded-xl border border-slate-700 w-full md:w-auto text-center">
+                            <span id="range-display" class="text-sm font-mono text-indigo-400 font-bold">----/--/-- 〜
+                                ----/--/--</span>
+                        </div>
+                    </div>
+
+                    <div class="relative w-full h-8 flex items-center mb-2 px-2">
+                        <div class="absolute left-0 right-0 mx-2 h-2 bg-slate-700 rounded-full"></div>
+                        <div id="slider-track"
+                            class="absolute h-2 bg-indigo-500/80 rounded-full pointer-events-none mx-2"
+                            style="left: 0%; width: 100%;"></div>
+                        <input type="range" id="range-start"
+                            class="absolute w-full -ml-2 appearance-none bg-transparent pointer-events-none"
+                            style="z-index: 3;">
+                        <input type="range" id="range-end"
+                            class="absolute w-full -ml-2 appearance-none bg-transparent pointer-events-none"
+                            style="z-index: 4;">
+                    </div>
+                </div>
+
+                <!-- Summary Cards Grid -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="bg-slate-800/80 border border-slate-700/60 p-5 rounded-2xl shadow-sm backdrop-blur">
+                        <div class="flex items-center justify-between text-slate-400 mb-2">
+                            <span class="text-xs font-semibold uppercase tracking-wider">トータル回数</span>
+                            <i data-lucide="hash" class="w-4 h-4 text-indigo-400"></i>
+                        </div>
+                        <div id="stat-total" class="text-3xl font-bold text-white">-</div>
+                    </div>
+                    <div class="bg-slate-800/80 border border-slate-700/60 p-5 rounded-2xl shadow-sm backdrop-blur">
+                        <div class="flex items-center justify-between text-slate-400 mb-2">
+                            <span class="text-xs font-semibold uppercase tracking-wider">ベストタイム</span>
+                            <i data-lucide="award" class="w-4 h-4 text-emerald-400"></i>
+                        </div>
+                        <div id="stat-best" class="text-3xl font-bold text-emerald-400">-</div>
+                    </div>
+                    <div class="bg-slate-800/80 border border-slate-700/60 p-5 rounded-2xl shadow-sm backdrop-blur">
+                        <div class="flex items-center justify-between text-slate-400 mb-2">
+                            <span class="text-xs font-semibold uppercase tracking-wider">全体平均</span>
+                            <i data-lucide="activity" class="w-4 h-4 text-sky-400"></i>
+                        </div>
+                        <div id="stat-avg" class="text-3xl font-bold text-white">-</div>
+                    </div>
+                    <div class="bg-slate-800/80 border border-slate-700/60 p-5 rounded-2xl shadow-sm backdrop-blur">
+                        <div class="flex items-center justify-between text-slate-400 mb-2">
+                            <span class="text-xs font-semibold uppercase tracking-wider">直近 Ao5 平均</span>
+                            <i data-lucide="trending-up" class="w-4 h-4 text-amber-400"></i>
+                        </div>
+                        <div id="stat-ao5" class="text-3xl font-bold text-amber-400">-</div>
+                    </div>
+                </div>
+
+                <!-- Graph Section -->
+                <div class="bg-slate-800/80 border border-slate-700/60 p-6 rounded-2xl shadow-sm backdrop-blur">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-semibold text-lg flex items-center space-x-2">
+                            <i data-lucide="line-chart" class="w-5 h-5 text-indigo-400"></i>
+                            <span>タイム推移グラフ</span>
+                        </h3>
+                        <span class="text-xs text-slate-400">時系列</span>
+                    </div>
+                    <div class="h-72 w-full relative">
+                        <canvas id="timeChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Recent Logs Table -->
+                <div
+                    class="bg-slate-800/80 border border-slate-700/60 rounded-2xl shadow-sm backdrop-blur overflow-hidden">
+                    <div class="p-6 border-b border-slate-700/60 flex items-center justify-between">
+                        <h3 class="font-semibold text-lg flex items-center space-x-2">
+                            <i data-lucide="list" class="w-5 h-5 text-indigo-400"></i>
+                            <span>直近のログ一覧</span>
+                        </h3>
+                        <button id="refresh-btn"
+                            class="text-slate-400 hover:text-white p-2 rounded-lg hover:bg-slate-700 transition-colors">
+                            <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead
+                                class="bg-slate-900/50 text-slate-400 uppercase text-xs border-b border-slate-700/60">
+                                <tr>
+                                    <th class="px-6 py-3 font-semibold">日時</th>
+                                    <th class="px-6 py-3 font-semibold">タイム</th>
+                                    <th class="px-6 py-3 font-semibold">ソルブタイプ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="logs-tbody" class="divide-y divide-slate-700/40">
+                                <tr>
+                                    <td colspan="3" class="px-6 py-8 text-center text-slate-500">データを読み込んでいません</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Global Ranking Section -->
+        <div id="section-ranking" class="hidden space-y-6">
+            <div class="bg-slate-800/40 border border-slate-700/60 p-6 rounded-2xl shadow-sm">
+                <div class="flex items-center space-x-3 mb-6">
+                    <div class="bg-amber-500/20 p-2.5 rounded-xl text-amber-400 shrink-0">
+                        <i data-lucide="crown" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold text-white">歴代ベスト ランキング</h2>
+                        <p class="text-xs text-slate-400">各ソルブタイプにおける全ユーザーの歴代トップ3</p>
+                    </div>
+                </div>
+
+                <div id="ranking-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    <!-- Rankings will be injected here -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal"
+        class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl w-full max-w-md p-6 space-y-6 shadow-2xl">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-bold">Supabase 接続設定</h3>
+                <button id="close-settings" class="text-slate-400 hover:text-white">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <form id="settings-form" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Supabase URL</label>
+                    <input type="text" id="supabase-url" required
+                        class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Publishable Key</label>
+                    <input type="password" id="supabase-key" required
+                        class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-indigo-500">
+                </div>
+                <div class="pt-2 flex justify-end space-x-3">
+                    <button type="button" id="cancel-settings"
+                        class="px-4 py-2 rounded-xl text-sm font-medium hover:bg-slate-700">キャンセル</button>
+                    <button type="submit"
+                        class="bg-indigo-600 hover:bg-indigo-500 px-5 py-2 rounded-xl text-sm font-medium text-white transition-colors">保存して再接続</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Custom Notification Modal -->
+    <div id="notification-modal"
+        class="fixed inset-0 bg-black/50 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+        <div
+            class="bg-slate-800 border border-slate-700 rounded-2xl max-w-sm w-full p-6 space-y-4 shadow-xl text-center">
+            <div id="notification-icon"
+                class="w-12 h-12 rounded-full bg-indigo-600/20 text-indigo-400 flex items-center justify-center mx-auto">
+                <i data-lucide="info" class="w-6 h-6"></i>
+            </div>
+            <p id="notification-message" class="text-sm text-slate-300"></p>
+            <button onclick="closeNotification()"
+                class="w-full bg-slate-700 hover:bg-slate-600 py-2 rounded-xl text-sm font-medium">閉じる</button>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Lucide Icons
+        lucide.createIcons();
+
+        let chartInstance = null;
+        let allUserRecordsOriginal = [];
+        let allUserRecords = [];
+        let userMap = {}; // ユーザーIDと名前の紐付けを保存するマップ
+        let rankingsFetched = false; // ランキング取得済みフラグ
+
+        const SOLVE_TYPES = ['完全十字', '完全一面', 'F2L', 'OLL', 'PLL(LBL)', 'PLL(CFOP)', '5x5x5'];
+
+        // Default configuration provided by user
+        const DEFAULT_URL = "https://sqknnxyumrbiunsllzcl.supabase.co";
+        const DEFAULT_KEY = "sb_publishable_QKQjNX4H8SLKclkvH8zrUg_DQOeLl_I";
+
+        const currentUrl = localStorage.getItem('sb_url') || DEFAULT_URL;
+        const currentKey = localStorage.getItem('sb_key') || DEFAULT_KEY;
+
+        document.getElementById('supabase-url').value = currentUrl;
+        document.getElementById('supabase-key').value = currentKey;
+
+        let supabaseClient = window.supabase.createClient(currentUrl, currentKey);
+
+        const tabBtnPersonal = document.getElementById('tab-btn-personal');
+        const tabBtnRanking = document.getElementById('tab-btn-ranking');
+        const sectionPersonal = document.getElementById('section-personal');
+        const sectionRanking = document.getElementById('section-ranking');
+
+        tabBtnPersonal.addEventListener('click', () => {
+            tabBtnPersonal.className = "pb-3 font-bold text-sm text-indigo-400 border-b-2 border-indigo-500 transition-colors";
+            tabBtnRanking.className = "pb-3 font-medium text-sm text-slate-400 border-b-2 border-transparent hover:text-slate-300 transition-colors";
+            sectionPersonal.classList.remove('hidden');
+            sectionRanking.classList.add('hidden');
+        });
+
+        tabBtnRanking.addEventListener('click', () => {
+            tabBtnRanking.className = "pb-3 font-bold text-sm text-indigo-400 border-b-2 border-indigo-500 transition-colors";
+            tabBtnPersonal.className = "pb-3 font-medium text-sm text-slate-400 border-b-2 border-transparent hover:text-slate-300 transition-colors";
+            sectionRanking.classList.remove('hidden');
+            sectionPersonal.classList.add('hidden');
+
+            // 初回表示時にランキングを取得
+            fetchAndRenderRankings();
+        });
+
+        const settingsModal = document.getElementById('settings-modal');
+        document.getElementById('open-settings').addEventListener('click', () => settingsModal.classList.remove('hidden'));
+        document.getElementById('close-settings').addEventListener('click', () => settingsModal.classList.add('hidden'));
+        document.getElementById('cancel-settings').addEventListener('click', () => settingsModal.classList.add('hidden'));
+
+        document.getElementById('settings-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const url = document.getElementById('supabase-url').value.trim();
+            const key = document.getElementById('supabase-key').value.trim();
+            localStorage.setItem('sb_url', url);
+            localStorage.setItem('sb_key', key);
+            settingsModal.classList.add('hidden');
+            supabaseClient = window.supabase.createClient(url, key);
+            rankingsFetched = false; // ランキングを再取得可能にする
+            loadActiveUsers();
+            showNotification('接続設定を更新しました');
+        });
+
+        document.getElementById('refresh-btn').addEventListener('click', () => {
+            const selectedUserId = document.getElementById('user-select').value;
+            if (selectedUserId) {
+                fetchUserSolves(selectedUserId);
+            } else {
+                showNotification('ユーザーが選択されていません。');
+            }
+        });
+
+        function showNotification(msg) {
+            document.getElementById('notification-message').innerText = msg;
+            document.getElementById('notification-modal').classList.remove('hidden');
+        }
+        function closeNotification() {
+            document.getElementById('notification-modal').classList.add('hidden');
+        }
+
+        async function loadActiveUsers() {
+            try {
+                // 1. .eq('isActive', true) を消して「全員分」取得する
+                const { data, error } = await supabaseClient
+                    .from('users')
+                    .select('*')
+                    .order('name', { ascending: true });
+
+                if (error) throw error;
+
+                const selectElem = document.getElementById('user-select');
+                selectElem.innerHTML = '<option value="">-- ユーザーを選択してください --</option>';
+                userMap = {}; // マップをリセット
+
+                if (data && data.length > 0) {
+                    data.forEach(user => {
+                        const userId = user.id || user.user_id || user.uid;
+                        const userName = user.name || user.username || user.email || `User #${userId.toString().substring(0, 4)}`;
+
+                        // 2. IDと名前の紐付け（マップ）には「全員」保存する（ランキング用）
+                        userMap[userId] = userName;
+
+                        // 3. プルダウンには isActive が true の人だけ追加する
+                        if (user.isActive === true) {
+                            const opt = document.createElement('option');
+                            opt.value = userId;
+                            opt.textContent = userName;
+                            selectElem.appendChild(opt);
+                        }
+                    });
+                } else {
+                    showNotification('ユーザーが見つかりませんでした。');
+                }
+            } catch (err) {
+                console.error(err);
+                showNotification('ユーザー一覧の取得エラー: ' + err.message);
+            }
+        }
+
+        async function fetchAndRenderRankings() {
+            if (rankingsFetched) return;
+
+            const container = document.getElementById('ranking-grid');
+            container.innerHTML = '<div class="col-span-full text-center text-slate-400 py-12 flex flex-col items-center"><i data-lucide="loader-2" class="w-8 h-8 animate-spin mb-4 text-indigo-500"></i><p>ランキングを集計中...</p></div>';
+            lucide.createIcons();
+
+            try {
+                // クエリでの絞り込みエラーを防ぐため、まとめてデータを取得してJS側で集計する
+                const { data, error } = await supabaseClient
+                    .from('cube_solves')
+                    .select('*')
+                    .limit(50000); // 必要に応じて上限を調整
+
+                if (error) throw error;
+
+                const allSolves = data || [];
+                let html = '';
+
+                for (const solveType of SOLVE_TYPES) {
+                    // 各ソルブタイプごとにタイムが速い順に集計
+                    const userBests = {};
+
+                    allSolves.forEach(r => {
+                        // 種別の判定
+                        const currentType = r.solve_type || r.type;
+                        if (currentType !== solveType) return;
+
+                        const uId = r.user_id;
+                        if (!uId) return;
+
+                        const t = extractSecondsFromRecord(r);
+                        if (t <= 0) return;
+
+                        // そのユーザーの過去のベストタイムより速ければ更新
+                        if (!userBests[uId] || t < userBests[uId]) {
+                            userBests[uId] = t;
+                        }
+                    });
+
+                    // ランキングトップ10を抽出 (タイムの昇順ソート)
+                    const sortedRankings = Object.entries(userBests)
+                        .sort((a, b) => a[1] - b[1])
+                        .slice(0, 10);
+
+                    // カードのHTML生成
+                    html += `
+                        <div class="bg-slate-800/80 border border-slate-700/60 p-5 rounded-2xl shadow-sm backdrop-blur flex flex-col">
+                            <h3 class="font-bold text-lg text-white mb-4 flex items-center space-x-2">
+                                <i data-lucide="trophy" class="w-5 h-5 text-indigo-400"></i>
+                                <span>${solveType}</span>
+                            </h3>
+                            <div class="space-y-3 flex-1 flex flex-col ">
+                    `;
+
+                    if (sortedRankings.length === 0) {
+                        html += `<p class="text-sm text-slate-500 text-center py-4">まだ記録がありません</p>`;
+                    } else {
+                        const medals = ['🥇', '🥈', '🥉'];
+                        const textColors = ['text-yellow-400', 'text-slate-300', 'text-amber-600'];
+
+                        sortedRankings.forEach((rank, index) => {
+                            const userId = rank[0];
+                            const time = rank[1];
+                            const defaultName = `User (${userId.toString().substring(0, 4)})`;
+                            const userName = userMap[userId] || defaultName;
+
+                            html += `
+                                <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-900/60 border border-slate-700/30">
+                                    <div class="flex items-center space-x-3 truncate">
+                                        <span class="text-xl ${textColors[index] || ''}">${medals[index] || (index + 1 + '.')}</span>
+                                        <span class="font-medium text-slate-200 text-sm truncate max-w-[110px]" title="${userName}">${userName}</span>
+                                    </div>
+                                    <span class="font-mono font-bold text-emerald-400 text-sm tracking-tight">${formatTime(time)}</span>
+                                </div>
+                            `;
+                        });
+                    }
+                    html += `</div></div>`;
+                }
+
+                container.innerHTML = html;
+                lucide.createIcons();
+                rankingsFetched = true;
+            } catch (err) {
+                console.error(err);
+                container.innerHTML = `<div class="col-span-full text-center text-red-400 py-8">ランキングの取得に失敗しました: ${err.message}</div>`;
+            }
+        }
+
+        document.getElementById('user-select').addEventListener('change', (e) => {
+            const userId = e.target.value;
+            const initialNotice = document.getElementById('initial-notice');
+            const dashboardContent = document.getElementById('dashboard-content');
+
+            if (!userId) {
+                initialNotice.classList.remove('hidden');
+                dashboardContent.classList.add('hidden');
+                return;
+            }
+
+            initialNotice.classList.add('hidden');
+            dashboardContent.classList.remove('hidden');
+            fetchUserSolves(userId);
+        });
+
+        async function fetchUserSolves(userId) {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('cube_solves')
+                    .select('*')
+                    .eq('user_id', userId)
+                    .order('created_at', { ascending: false })
+                    .limit(50000);
+
+                if (error) throw error;
+
+                if (!data || data.length === 0) {
+                    showNotification('このユーザーの測定ログはまだありません。');
+                    allUserRecordsOriginal = [];
+                    allUserRecords = [];
+                    initSlider();
+                    return;
+                }
+                allUserRecordsOriginal = data;
+                applyFilters();
+
+            } catch (err) {
+                console.error(err);
+                showNotification('測定ログの取得エラー: ' + err.message);
+            }
+        }
+
+        function applyFilters() {
+            const solveType = document.getElementById('type-select').value;
+
+            let filtered = allUserRecordsOriginal;
+            if (solveType) {
+                filtered = allUserRecordsOriginal.filter(r => {
+                    const rType = r.solve_type || r.type || '';
+                    return rType === solveType;
+                });
+            }
+
+            if (filtered.length === 0 && allUserRecordsOriginal.length > 0) {
+                allUserRecords = [];
+            } else {
+                allUserRecords = [...filtered].reverse().map((r, i) => ({
+                    ...r,
+                    globalIndex: i + 1
+                }));
+            }
+            initSlider();
+        }
+
+        document.getElementById('type-select').addEventListener('change', () => {
+            const userId = document.getElementById('user-select').value;
+            if (userId) applyFilters();
+        });
+
+        function formatDateFromRecord(index) {
+            if (!allUserRecords || allUserRecords.length === 0) return '----/--/--';
+            const idx = Math.min(Math.max(0, index - 1), allUserRecords.length - 1);
+            const record = allUserRecords[idx];
+            if (!record || !record.created_at) return '----/--/--';
+
+            const d = new Date(record.created_at);
+            return `${d.getFullYear()}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getDate().toString().padStart(2, '0')}`;
+        }
+
+        function initSlider() {
+            const startInput = document.getElementById('range-start');
+            const endInput = document.getElementById('range-end');
+            const max = allUserRecords.length;
+
+            if (max === 0) {
+                startInput.min = 0; startInput.max = 0; startInput.value = 0;
+                endInput.min = 0; endInput.max = 0; endInput.value = 0;
+                document.getElementById('range-display').innerText = `----/--/-- 〜 ----/--/--`;
+                renderDashboard();
+                return;
+            }
+
+            startInput.min = 1;
+            startInput.max = max;
+            startInput.value = 1;
+
+            endInput.min = 1;
+            endInput.max = max;
+            endInput.value = max;
+
+            updateSliderVisuals();
+            renderDashboard();
+        }
+
+        function updateSliderVisuals() {
+            const startInput = document.getElementById('range-start');
+            const endInput = document.getElementById('range-end');
+            const track = document.getElementById('slider-track');
+            const display = document.getElementById('range-display');
+            const max = parseInt(startInput.max) || 1;
+
+            let startVal = parseInt(startInput.value);
+            let endVal = parseInt(endInput.value);
+
+            if (startVal > endVal) {
+                const tmp = startVal;
+                startVal = endVal;
+                endVal = tmp;
+            }
+
+            let startPercent = 0;
+            let endPercent = 100;
+            if (max > 1) {
+                startPercent = ((startVal - 1) / (max - 1)) * 100;
+                endPercent = ((endVal - 1) / (max - 1)) * 100;
+            }
+
+            track.style.left = `${startPercent}%`;
+            track.style.width = `${endPercent - startPercent}%`;
+
+            const startDateStr = formatDateFromRecord(startVal);
+            const endDateStr = formatDateFromRecord(endVal);
+            display.innerText = `${startDateStr} 〜 ${endDateStr}`;
+        }
+
+        document.getElementById('range-start').addEventListener('input', updateSliderVisuals);
+        document.getElementById('range-end').addEventListener('input', updateSliderVisuals);
+
+        document.getElementById('range-start').addEventListener('change', () => {
+            adjustSliderOrder();
+            renderDashboard();
+        });
+        document.getElementById('range-end').addEventListener('change', () => {
+            adjustSliderOrder();
+            renderDashboard();
+        });
+
+        function adjustSliderOrder() {
+            const startInput = document.getElementById('range-start');
+            const endInput = document.getElementById('range-end');
+            let startVal = parseInt(startInput.value);
+            let endVal = parseInt(endInput.value);
+            if (startVal > endVal) {
+                startInput.value = endVal;
+                endInput.value = startVal;
+            }
+            updateSliderVisuals();
+        }
+
+        function formatTime(seconds) {
+            if (isNaN(seconds) || seconds == null) return '-';
+            const mins = Math.floor(seconds / 60);
+            const secs = (seconds % 60).toFixed(2);
+            if (mins > 0) {
+                return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+            }
+            return `${secs}s`;
+        }
+
+        function extractSecondsFromRecord(r) {
+            if (r.time_ms !== undefined && r.time_ms !== null) {
+                return Number(r.time_ms) / 1000;
+            }
+            let val = Number(r.time || r.duration || r.solve_time);
+            if (isNaN(val)) return 0;
+            if (val > 10000) return val / 1000;
+            return val;
+        }
+
+        function renderDashboard() {
+            if (allUserRecords.length === 0) {
+                clearDashboard();
+                return;
+            }
+
+            let startVal = parseInt(document.getElementById('range-start').value);
+            let endVal = parseInt(document.getElementById('range-end').value);
+
+            const targetRecords = allUserRecords.slice(startVal - 1, endVal);
+
+            if (targetRecords.length === 0) {
+                clearDashboard();
+                return;
+            }
+
+            const times = targetRecords.map(r => extractSecondsFromRecord(r));
+            const total = targetRecords.length;
+
+            const best = Math.min(...times);
+            const avg = times.reduce((a, b) => a + b, 0) / total;
+
+            let ao5 = '-';
+            if (times.length >= 5) {
+                const recent5 = times.slice(-5);
+                const sorted5 = [...recent5].sort((a, b) => a - b);
+                const trimmed = sorted5.slice(1, 4);
+                const avg5 = trimmed.reduce((a, b) => a + b, 0) / 3;
+                ao5 = formatTime(avg5);
+            }
+
+            document.getElementById('stat-total').innerText = total;
+            document.getElementById('stat-best').innerText = formatTime(best);
+            document.getElementById('stat-avg').innerText = formatTime(avg);
+            document.getElementById('stat-ao5').innerText = ao5;
+
+            const tbody = document.getElementById('logs-tbody');
+            tbody.innerHTML = '';
+
+            const recentRecords = [...targetRecords].reverse().slice(0, 20);
+            recentRecords.forEach(r => {
+                const dateStr = r.created_at ? new Date(r.created_at).toLocaleString('ja-JP') : '-';
+                const timeSeconds = extractSecondsFromRecord(r);
+                const timeVal = formatTime(timeSeconds);
+                const rType = r.solve_type || r.type || '-';
+
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-700/30 transition-colors';
+                tr.innerHTML = `
+                    <td class="px-6 py-4 text-slate-300 text-xs">${dateStr}</td>
+                    <td class="px-6 py-4 font-mono font-bold text-white flex flex-col">
+                        <span>${timeVal}</span>
+                        <span class="text-[10px] text-slate-500 font-normal">#${r.globalIndex}回目</span>
+                    </td>
+                    <td class="px-6 py-4 text-slate-400 text-xs truncate max-w-xs">${rType}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            const labels = targetRecords.map(r => `#${r.globalIndex}`);
+            renderChart(labels, times);
+        }
+
+        function clearDashboard() {
+            document.getElementById('stat-total').innerText = '-';
+            document.getElementById('stat-best').innerText = '-';
+            document.getElementById('stat-avg').innerText = '-';
+            document.getElementById('stat-ao5').innerText = '-';
+            document.getElementById('logs-tbody').innerHTML = `<tr><td colspan="3" class="px-6 py-8 text-center text-slate-500">データがありません</td></tr>`;
+            if (chartInstance) chartInstance.destroy();
+        }
+
+        function renderChart(labels, data) {
+            const ctx = document.getElementById('timeChart').getContext('2d');
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'タイム (秒)',
+                        data: data,
+                        borderColor: '#818cf8',
+                        backgroundColor: 'rgba(129, 140, 248, 0.1)',
+                        borderWidth: 2,
+                        pointRadius: 3,
+                        pointBackgroundColor: '#818cf8',
+                        fill: true,
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                            ticks: { color: '#94a3b8', font: { size: 11 } }
+                        },
+                        y: {
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                            ticks: { color: '#94a3b8', font: { size: 11 } }
+                        }
+                    }
+                }
+            });
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            loadActiveUsers();
+        });
+    </script>
+</body>
+
+</html>
