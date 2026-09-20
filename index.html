@@ -15,70 +15,105 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap');
 
         body {
             font-family: 'Inter', sans-serif;
+        }
+
+        .font-mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* カスタムスクロールバー */
+        ::-webkit-scrollbar {
+            height: 8px;
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
         }
 
         /* ダブルスライダー用のスタイルハック */
         input[type=range]::-webkit-slider-thumb {
             pointer-events: auto;
             appearance: none;
-            width: 20px;
-            height: 20px;
+            width: 18px;
+            height: 18px;
             border-radius: 50%;
             background: #818cf8;
-            border: 3px solid #fff;
+            border: 2px solid #fff;
             cursor: pointer;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+            transition: transform 0.1s ease;
+        }
+
+        input[type=range]::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
         }
 
         input[type=range]::-moz-range-thumb {
             pointer-events: auto;
-            width: 20px;
-            height: 20px;
+            width: 18px;
+            height: 18px;
             border-radius: 50%;
             background: #818cf8;
-            border: 3px solid #fff;
+            border: 2px solid #fff;
             cursor: pointer;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
         }
     </style>
 </head>
 
-<body class="bg-slate-900 text-slate-100 h-full flex flex-col">
-    <header class="bg-slate-800 border-b border-slate-700 px-6 py-4 flex items-center justify-between shrink-0">
+<body class="bg-slate-900 text-slate-100 h-full flex flex-col antialiased selection:bg-indigo-500 selection:text-white">
+    <!-- Header: Full-width sticky navbar -->
+    <header
+        class="bg-slate-800/90 backdrop-blur border-b border-slate-700/80 px-6 py-3.5 flex items-center justify-between shrink-0 sticky top-0 z-30">
         <div class="flex items-center space-x-3">
-            <div class="bg-indigo-600 p-2 rounded-xl text-white">
-                <i data-lucide="timer" class="w-6 h-6"></i>
+            <div
+                class="bg-gradient-to-tr from-indigo-600 to-indigo-400 p-2.5 rounded-xl text-white shadow-md shadow-indigo-500/20">
+                <i data-lucide="timer" class="w-5 h-5"></i>
             </div>
-            <h1 class="text-xl font-bold tracking-tight">Rubik's Cube Summary</h1>
+            <div>
+                <h1 class="text-lg font-bold tracking-tight text-white flex items-center gap-2">
+                    Rubik's Cube Analytics
+                    <span
+                        class="text-[11px] bg-indigo-500/20 text-indigo-300 font-semibold px-2 py-0.5 rounded-full border border-indigo-500/30">Wide
+                        Dashboard</span>
+                </h1>
+            </div>
         </div>
         <button id="open-settings"
-            class="flex items-center space-x-2 bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-            <i data-lucide="settings" class="w-4 h-4"></i>
+            class="flex items-center space-x-2 bg-slate-700/80 hover:bg-slate-600 px-3.5 py-1.5 rounded-xl text-xs font-medium transition-all duration-200 border border-slate-600">
+            <i data-lucide="settings" class="w-4 h-4 text-slate-300"></i>
             <span>Supabase 設定</span>
         </button>
     </header>
 
-    <main class="flex-1 overflow-y-auto p-4 md:p-8 max-w-7xl mx-auto w-full space-y-6">
+    <!-- Main Container: Full-width layout utilizing 100% of the screen width -->
+    <main class="flex-1 overflow-y-auto p-4 md:p-6 w-full space-y-6">
 
         <!-- Tab Navigation -->
-        <div class="flex border-b border-slate-700/60 mb-6 space-x-8 px-2">
+        <div class="flex border-b border-slate-700/80 space-x-8 px-2">
             <button id="tab-btn-personal"
-                class="pb-3 font-bold text-sm text-indigo-400 border-b-2 border-indigo-500 transition-colors">
-                <div class="flex items-center space-x-2">
-                    <i data-lucide="user" class="w-4 h-4"></i>
-                    <span>個人分析</span>
-                </div>
+                class="pb-3 font-bold text-sm text-indigo-400 border-b-2 border-indigo-500 transition-colors flex items-center space-x-2">
+                <i data-lucide="user" class="w-4 h-4"></i>
+                <span>個人分析 & タイプ別サマリー</span>
             </button>
             <button id="tab-btn-ranking"
-                class="pb-3 font-medium text-sm text-slate-400 border-b-2 border-transparent hover:text-slate-300 transition-colors">
-                <div class="flex items-center space-x-2">
-                    <i data-lucide="trophy" class="w-4 h-4"></i>
-                    <span>全体ランキング</span>
-                </div>
+                class="pb-3 font-medium text-sm text-slate-400 border-b-2 border-transparent hover:text-slate-300 transition-colors flex items-center space-x-2">
+                <i data-lucide="trophy" class="w-4 h-4"></i>
+                <span>全体ランキング（全7種目 横並び）</span>
             </button>
         </div>
 
@@ -86,31 +121,31 @@
         <div id="section-personal" class="space-y-6">
             <!-- User & Solve Type Selection Section -->
             <div
-                class="bg-slate-800/80 border border-slate-700/60 p-6 rounded-2xl shadow-sm backdrop-blur flex flex-col md:flex-row items-center gap-6">
+                class="bg-slate-800/70 border border-slate-700/60 p-5 rounded-2xl shadow-sm backdrop-blur flex flex-col md:flex-row items-center gap-4">
                 <!-- User Select -->
                 <div class="flex items-center space-x-3 w-full md:w-1/2">
-                    <div class="bg-indigo-600/20 p-2.5 rounded-xl text-indigo-400 shrink-0">
-                        <i data-lucide="user" class="w-6 h-6"></i>
+                    <div class="bg-indigo-600/20 p-2.5 rounded-xl text-indigo-400 shrink-0 border border-indigo-500/20">
+                        <i data-lucide="user" class="w-5 h-5"></i>
                     </div>
                     <div class="w-full">
-                        <label class="block text-xs text-slate-400 mb-1">ユーザー</label>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">ユーザーを選択</label>
                         <select id="user-select"
-                            class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-200 focus:outline-none focus:border-indigo-500">
+                            class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-200 focus:outline-none focus:border-indigo-500 transition-colors">
                             <option value="">-- ユーザーを選択 --</option>
                         </select>
                     </div>
                 </div>
 
-                <!-- Solve Type Select -->
+                <!-- Solve Type Filter Select -->
                 <div class="flex items-center space-x-3 w-full md:w-1/2">
-                    <div class="bg-sky-600/20 p-2.5 rounded-xl text-sky-400 shrink-0">
-                        <i data-lucide="box" class="w-6 h-6"></i>
+                    <div class="bg-sky-600/20 p-2.5 rounded-xl text-sky-400 shrink-0 border border-sky-500/20">
+                        <i data-lucide="layers" class="w-5 h-5"></i>
                     </div>
                     <div class="w-full">
-                        <label class="block text-xs text-slate-400 mb-1">ソルブタイプ</label>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">ソルブタイプで絞り込み</label>
                         <select id="type-select"
-                            class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-200 focus:outline-none focus:border-indigo-500">
-                            <option value="">すべてのソルブタイプ</option>
+                            class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-200 focus:outline-none focus:border-indigo-500 transition-colors">
+                            <option value="">すべてのソルブタイプ (全合計)</option>
                             <option value="完全十字">完全十字</option>
                             <option value="完全一面">完全一面</option>
                             <option value="F2L">F2L</option>
@@ -125,144 +160,211 @@
 
             <!-- Initial/Empty State Notice -->
             <div id="initial-notice"
-                class="bg-slate-800/40 border border-dashed border-slate-700 p-12 rounded-2xl text-center space-y-3">
+                class="bg-slate-800/30 border border-dashed border-slate-700/80 p-16 rounded-2xl text-center space-y-3">
                 <div
-                    class="w-12 h-12 bg-slate-800 rounded-full flex items-center justify-center mx-auto text-slate-400">
-                    <i data-lucide="arrow-up" class="w-6 h-6"></i>
+                    class="w-14 h-14 bg-indigo-500/10 rounded-2xl flex items-center justify-center mx-auto text-indigo-400 border border-indigo-500/20">
+                    <i data-lucide="user-check" class="w-7 h-7"></i>
                 </div>
-                <h3 class="text-lg font-medium text-slate-300">ユーザーが選択されていません</h3>
-                <p class="text-sm text-slate-500 max-w-md mx-auto">上のプルダウンからユーザーを選択すると、そのユーザーの測定サマリーやグラフが表示されます。</p>
+                <h3 class="text-lg font-semibold text-slate-200">ユーザーを選択してください</h3>
+                <p class="text-sm text-slate-400 max-w-md mx-auto">
+                    上のドロップダウンから対象のユーザーを選択すると、各ソルブタイプの一覧カードやタイムチャートが表示されます。</p>
             </div>
 
             <!-- Dashboard Content (Hidden until user selected) -->
             <div id="dashboard-content" class="space-y-6 hidden">
 
+                <!-- All Solve Types Horizontal Cards Bar (個人別 各ソルブタイプ一覧カード) -->
+                <div class="space-y-2.5">
+                    <div class="flex items-center justify-between px-1">
+                        <h2 class="text-sm font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                            <i data-lucide="layout-grid" class="w-4 h-4 text-indigo-400"></i>
+                            <span>各ソルブタイプのベスト & 統計カード (横並び一覧)</span>
+                        </h2>
+                        <span class="text-xs text-slate-500 hidden sm:inline">クリックで該当タイプに絞り込み</span>
+                    </div>
+
+                    <!-- 9カラムグリッド（PLL2種を2枠分に拡大し他をコンパクトに横並び配置） -->
+                    <div id="personal-types-grid"
+                        class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-9 gap-3 w-full">
+                        <!-- JSにて動的生成 -->
+                    </div>
+                </div>
+
                 <!-- Data Range Slider -->
-                <div class="bg-slate-800/80 border border-slate-700/60 p-6 rounded-2xl shadow-sm backdrop-blur">
-                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                <div class="bg-slate-800/70 border border-slate-700/60 p-5 rounded-2xl shadow-sm backdrop-blur">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
                         <div>
-                            <h3 class="font-semibold text-lg flex items-center space-x-2">
-                                <i data-lucide="calendar" class="w-5 h-5 text-indigo-400"></i>
-                                <span>データ適用期間</span>
+                            <h3 class="font-semibold text-base flex items-center space-x-2 text-white">
+                                <i data-lucide="calendar-range" class="w-4 h-4 text-indigo-400"></i>
+                                <span>データ適用範囲</span>
                             </h3>
-                            <p class="text-xs text-slate-400 mt-1">集計やグラフに反映する期間を指定します</p>
+                            <p class="text-xs text-slate-400 mt-0.5">スライダーで分析対象の測定ログ期間を柔軟にフィルタリングできます</p>
                         </div>
-                        <div
-                            class="bg-slate-900 px-4 py-2 rounded-xl border border-slate-700 w-full md:w-auto text-center">
-                            <span id="range-display" class="text-sm font-mono text-indigo-400 font-bold">----/--/-- 〜
+                        <div class="bg-slate-900/90 px-4 py-1.5 rounded-xl border border-slate-700 text-center">
+                            <span id="range-display"
+                                class="text-xs sm:text-sm font-mono text-indigo-400 font-bold">----/--/-- 〜
                                 ----/--/--</span>
                         </div>
                     </div>
 
-                    <div class="relative w-full h-8 flex items-center mb-2 px-2">
-                        <div class="absolute left-0 right-0 mx-2 h-2 bg-slate-700 rounded-full"></div>
+                    <div class="relative w-full h-8 flex items-center px-1">
+                        <div class="absolute left-0 right-0 mx-1 h-2 bg-slate-700 rounded-full"></div>
                         <div id="slider-track"
-                            class="absolute h-2 bg-indigo-500/80 rounded-full pointer-events-none mx-2"
+                            class="absolute h-2 bg-gradient-to-r from-indigo-500 to-sky-500 rounded-full pointer-events-none mx-1"
                             style="left: 0%; width: 100%;"></div>
                         <input type="range" id="range-start"
-                            class="absolute w-full -ml-2 appearance-none bg-transparent pointer-events-none"
+                            class="absolute w-full appearance-none bg-transparent pointer-events-none"
                             style="z-index: 3;">
                         <input type="range" id="range-end"
-                            class="absolute w-full -ml-2 appearance-none bg-transparent pointer-events-none"
+                            class="absolute w-full appearance-none bg-transparent pointer-events-none"
                             style="z-index: 4;">
                     </div>
                 </div>
 
-                <!-- Summary Cards Grid -->
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div class="bg-slate-800/80 border border-slate-700/60 p-5 rounded-2xl shadow-sm backdrop-blur">
-                        <div class="flex items-center justify-between text-slate-400 mb-2">
-                            <span class="text-xs font-semibold uppercase tracking-wider">トータル回数</span>
+                <!-- 4 Selected Scope Metrics Cards -->
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+                    <div class="bg-slate-800/70 border border-slate-700/60 p-5 rounded-2xl shadow-sm backdrop-blur">
+                        <div class="flex items-center justify-between text-slate-400 mb-1.5">
+                            <span class="text-xs font-semibold uppercase tracking-wider">測定回数</span>
                             <i data-lucide="hash" class="w-4 h-4 text-indigo-400"></i>
                         </div>
-                        <div id="stat-total" class="text-3xl font-bold text-white">-</div>
+                        <div id="stat-total" class="text-2xl lg:text-3xl font-bold font-mono text-white">-</div>
                     </div>
-                    <div class="bg-slate-800/80 border border-slate-700/60 p-5 rounded-2xl shadow-sm backdrop-blur">
-                        <div class="flex items-center justify-between text-slate-400 mb-2">
+                    <div class="bg-slate-800/70 border border-slate-700/60 p-5 rounded-2xl shadow-sm backdrop-blur">
+                        <div class="flex items-center justify-between text-slate-400 mb-1.5">
                             <span class="text-xs font-semibold uppercase tracking-wider">ベストタイム</span>
                             <i data-lucide="award" class="w-4 h-4 text-emerald-400"></i>
                         </div>
-                        <div id="stat-best" class="text-3xl font-bold text-emerald-400">-</div>
+                        <div id="stat-best" class="text-2xl lg:text-3xl font-bold font-mono text-emerald-400">-</div>
                     </div>
-                    <div class="bg-slate-800/80 border border-slate-700/60 p-5 rounded-2xl shadow-sm backdrop-blur">
-                        <div class="flex items-center justify-between text-slate-400 mb-2">
-                            <span class="text-xs font-semibold uppercase tracking-wider">全体平均</span>
+                    <div class="bg-slate-800/70 border border-slate-700/60 p-5 rounded-2xl shadow-sm backdrop-blur">
+                        <div class="flex items-center justify-between text-slate-400 mb-1.5">
+                            <span class="text-xs font-semibold uppercase tracking-wider">期間内平均</span>
                             <i data-lucide="activity" class="w-4 h-4 text-sky-400"></i>
                         </div>
-                        <div id="stat-avg" class="text-3xl font-bold text-white">-</div>
+                        <div id="stat-avg" class="text-2xl lg:text-3xl font-bold font-mono text-white">-</div>
                     </div>
-                    <div class="bg-slate-800/80 border border-slate-700/60 p-5 rounded-2xl shadow-sm backdrop-blur">
-                        <div class="flex items-center justify-between text-slate-400 mb-2">
-                            <span class="text-xs font-semibold uppercase tracking-wider">直近 Ao5 平均</span>
+                    <div class="bg-slate-800/70 border border-slate-700/60 p-5 rounded-2xl shadow-sm backdrop-blur">
+                        <div class="flex items-center justify-between text-slate-400 mb-1.5">
+                            <span class="text-xs font-semibold uppercase tracking-wider">直近 Ao5 (Trimmed)</span>
                             <i data-lucide="trending-up" class="w-4 h-4 text-amber-400"></i>
                         </div>
-                        <div id="stat-ao5" class="text-3xl font-bold text-amber-400">-</div>
+                        <div id="stat-ao5" class="text-2xl lg:text-3xl font-bold font-mono text-amber-400">-</div>
                     </div>
                 </div>
 
-                <!-- Graph Section -->
-                <div class="bg-slate-800/80 border border-slate-700/60 p-6 rounded-2xl shadow-sm backdrop-blur">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="font-semibold text-lg flex items-center space-x-2">
-                            <i data-lucide="line-chart" class="w-5 h-5 text-indigo-400"></i>
-                            <span>タイム推移グラフ</span>
-                        </h3>
-                        <span class="text-xs text-slate-400">時系列</span>
+                <!-- Graph & Logs in Widescreen Grid -->
+                <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                    <!-- Graph Section (Span 2 on wide screens) -->
+                    <div
+                        class="xl:col-span-2 bg-slate-800/70 border border-slate-700/60 p-5 rounded-2xl shadow-sm backdrop-blur flex flex-col">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-semibold text-base flex items-center space-x-2 text-white">
+                                <i data-lucide="line-chart" class="w-4 h-4 text-indigo-400"></i>
+                                <span>タイム推移グラフ</span>
+                            </h3>
+                            <span
+                                class="text-xs font-medium text-slate-400 bg-slate-900/60 px-2.5 py-1 rounded-lg border border-slate-700/50">時系列推移</span>
+                        </div>
+                        <div class="h-80 w-full relative flex-1">
+                            <canvas id="timeChart"></canvas>
+                        </div>
                     </div>
-                    <div class="h-72 w-full relative">
-                        <canvas id="timeChart"></canvas>
-                    </div>
-                </div>
 
-                <!-- Recent Logs Table -->
-                <div
-                    class="bg-slate-800/80 border border-slate-700/60 rounded-2xl shadow-sm backdrop-blur overflow-hidden">
-                    <div class="p-6 border-b border-slate-700/60 flex items-center justify-between">
-                        <h3 class="font-semibold text-lg flex items-center space-x-2">
-                            <i data-lucide="list" class="w-5 h-5 text-indigo-400"></i>
-                            <span>直近のログ一覧</span>
-                        </h3>
-                        <button id="refresh-btn"
-                            class="text-slate-400 hover:text-white p-2 rounded-lg hover:bg-slate-700 transition-colors">
-                            <i data-lucide="refresh-cw" class="w-4 h-4"></i>
-                        </button>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left text-sm">
-                            <thead
-                                class="bg-slate-900/50 text-slate-400 uppercase text-xs border-b border-slate-700/60">
-                                <tr>
-                                    <th class="px-6 py-3 font-semibold">日時</th>
-                                    <th class="px-6 py-3 font-semibold">タイム</th>
-                                    <th class="px-6 py-3 font-semibold">ソルブタイプ</th>
-                                </tr>
-                            </thead>
-                            <tbody id="logs-tbody" class="divide-y divide-slate-700/40">
-                                <tr>
-                                    <td colspan="3" class="px-6 py-8 text-center text-slate-500">データを読み込んでいません</td>
-                                </tr>
-                            </tbody>
-                        </table>
+                    <!-- Recent Logs Table (Span 1 on wide screens) -->
+                    <div
+                        class="bg-slate-800/70 border border-slate-700/60 rounded-2xl shadow-sm backdrop-blur overflow-hidden flex flex-col">
+                        <div class="p-4 border-b border-slate-700/60 flex items-center justify-between bg-slate-800/50">
+                            <h3 class="font-semibold text-base flex items-center space-x-2 text-white">
+                                <i data-lucide="list" class="w-4 h-4 text-indigo-400"></i>
+                                <span>最新の測定ログ</span>
+                            </h3>
+                            <button id="refresh-btn" title="再読み込み"
+                                class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-700/70 transition-colors">
+                                <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                        <div class="overflow-y-auto max-h-80 flex-1">
+                            <table class="w-full text-left text-xs">
+                                <thead
+                                    class="bg-slate-900/70 text-slate-400 uppercase tracking-wider sticky top-0 border-b border-slate-700/60">
+                                    <tr>
+                                        <th class="px-4 py-2.5 font-semibold">日時</th>
+                                        <th class="px-4 py-2.5 font-semibold">タイム</th>
+                                        <th class="px-4 py-2.5 font-semibold">タイプ</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="logs-tbody" class="divide-y divide-slate-700/40">
+                                    <tr>
+                                        <td colspan="3" class="px-4 py-8 text-center text-slate-500">データを読み込んでいません</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Global Ranking Section -->
-        <div id="section-ranking" class="hidden space-y-6">
-            <div class="bg-slate-800/40 border border-slate-700/60 p-6 rounded-2xl shadow-sm">
-                <div class="flex items-center space-x-3 mb-6">
-                    <div class="bg-amber-500/20 p-2.5 rounded-xl text-amber-400 shrink-0">
-                        <i data-lucide="crown" class="w-6 h-6"></i>
+        <div id="section-ranking" class="hidden space-y-4">
+            <div class="bg-slate-800/50 border border-slate-700/60 p-5 rounded-2xl shadow-sm backdrop-blur">
+                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-5">
+                    <div class="flex items-center space-x-3">
+                        <div
+                            class="bg-amber-500/20 p-2.5 rounded-xl text-amber-400 border border-amber-500/20 shrink-0">
+                            <i data-lucide="crown" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h2 class="text-lg font-bold text-white">ランキング</h2>
+                                <span id="ranking-period-badge"
+                                    class="text-xs bg-indigo-500/20 text-indigo-300 font-semibold px-2 py-0.5 rounded-full border border-indigo-500/30">全部</span>
+                            </div>
+                            <p class="text-xs text-slate-400">メイン種目を画面全体に大きく配置。スクロールするとその他の種目を閲覧できます</p>
+                        </div>
                     </div>
-                    <div>
-                        <h2 class="text-xl font-bold text-white">歴代ベスト ランキング</h2>
-                        <p class="text-xs text-slate-400">各ソルブタイプにおける全ユーザーの歴代トップ3</p>
+
+                    <!-- 期間切り替えボタングループ -->
+                    <div id="ranking-period-buttons"
+                        class="flex flex-wrap items-center bg-slate-900/90 p-1.5 rounded-xl border border-slate-700/70 shrink-0 gap-1">
+                        <button type="button" data-period="today"
+                            class="period-btn px-3 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-slate-200 transition-all">今日</button>
+                        <button type="button" data-period="week"
+                            class="period-btn px-3 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-slate-200 transition-all">今週</button>
+                        <button type="button" data-period="month"
+                            class="period-btn px-3 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-slate-200 transition-all">今月</button>
+                        <button type="button" data-period="fiscal"
+                            class="period-btn px-3 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-slate-200 transition-all">今年度</button>
+                        <button type="button" data-period="all"
+                            class="period-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white shadow-sm shadow-indigo-600/30 transition-all">全部</button>
                     </div>
                 </div>
 
-                <div id="ranking-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                    <!-- Rankings will be injected here -->
+                <!-- 1段目: PLL(LBL) と PLL(CFOP) を画面いっぱいに表示 -->
+                <div class="space-y-3 mb-8">
+                    <div class="flex items-center justify-between px-1">
+                        <span
+                            class="text-xs font-bold text-indigo-300 uppercase tracking-wider flex items-center gap-1.5">
+                            <i data-lucide="sparkles" class="w-4 h-4 text-indigo-400"></i>
+                            <span>メイン種目 (PLL LBL / CFOP)</span>
+                        </span>
+                        <span class="text-xs text-slate-500">▼ 下へスクロールすると他の種目があります</span>
+                    </div>
+                    <div id="ranking-main-grid" class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <!-- JSにて注入 -->
+                    </div>
+                </div>
+
+                <!-- 2段目: スクロールして閲覧するその他の種目 -->
+                <div class="pt-6 border-t border-slate-700/80 space-y-3">
+                    <div class="flex items-center space-x-2 px-1">
+                        <i data-lucide="layers" class="w-4 h-4 text-slate-400"></i>
+                        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">その他のソルブタイプ</h3>
+                    </div>
+                    <div id="ranking-sub-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5 w-full">
+                        <!-- JSにて注入 -->
+                    </div>
                 </div>
             </div>
         </div>
@@ -273,7 +375,10 @@
         class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-slate-800 border border-slate-700 rounded-2xl w-full max-w-md p-6 space-y-6 shadow-2xl">
             <div class="flex items-center justify-between">
-                <h3 class="text-lg font-bold">Supabase 接続設定</h3>
+                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                    <i data-lucide="database" class="w-4 h-4 text-indigo-400"></i>
+                    <span>Supabase 接続設定</span>
+                </h3>
                 <button id="close-settings" class="text-slate-400 hover:text-white">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
@@ -282,18 +387,18 @@
                 <div>
                     <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Supabase URL</label>
                     <input type="text" id="supabase-url" required
-                        class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-indigo-500">
+                        class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-indigo-500 font-mono">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Publishable Key</label>
                     <input type="password" id="supabase-key" required
-                        class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-indigo-500">
+                        class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-indigo-500 font-mono">
                 </div>
                 <div class="pt-2 flex justify-end space-x-3">
                     <button type="button" id="cancel-settings"
-                        class="px-4 py-2 rounded-xl text-sm font-medium hover:bg-slate-700">キャンセル</button>
+                        class="px-4 py-2 rounded-xl text-xs font-medium hover:bg-slate-700 text-slate-300">キャンセル</button>
                     <button type="submit"
-                        class="bg-indigo-600 hover:bg-indigo-500 px-5 py-2 rounded-xl text-sm font-medium text-white transition-colors">保存して再接続</button>
+                        class="bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-xl text-xs font-medium text-white transition-colors">保存して再接続</button>
                 </div>
             </form>
         </div>
@@ -301,32 +406,44 @@
 
     <!-- Custom Notification Modal -->
     <div id="notification-modal"
-        class="fixed inset-0 bg-black/50 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+        class="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
         <div
             class="bg-slate-800 border border-slate-700 rounded-2xl max-w-sm w-full p-6 space-y-4 shadow-xl text-center">
             <div id="notification-icon"
-                class="w-12 h-12 rounded-full bg-indigo-600/20 text-indigo-400 flex items-center justify-center mx-auto">
+                class="w-12 h-12 rounded-full bg-indigo-600/20 text-indigo-400 flex items-center justify-center mx-auto border border-indigo-500/30">
                 <i data-lucide="info" class="w-6 h-6"></i>
             </div>
-            <p id="notification-message" class="text-sm text-slate-300"></p>
+            <p id="notification-message" class="text-sm text-slate-200"></p>
             <button onclick="closeNotification()"
-                class="w-full bg-slate-700 hover:bg-slate-600 py-2 rounded-xl text-sm font-medium">閉じる</button>
+                class="w-full bg-slate-700 hover:bg-slate-600 py-2.5 rounded-xl text-xs font-semibold transition-colors">閉じる</button>
         </div>
     </div>
 
     <script>
-        // Initialize Lucide Icons
         lucide.createIcons();
 
         let chartInstance = null;
         let allUserRecordsOriginal = [];
         let allUserRecords = [];
-        let userMap = {}; // ユーザーIDと名前の紐付けを保存するマップ
-        let rankingsFetched = false; // ランキング取得済みフラグ
+        let userMap = {};
+        let rankingsFetched = false;
+        let rankingRawSolves = [];
+        let selectedRankingPeriod = 'all';
 
+        // 全7種類の定義
         const SOLVE_TYPES = ['完全十字', '完全一面', 'F2L', 'OLL', 'PLL(LBL)', 'PLL(CFOP)', '5x5x5'];
 
-        // Default configuration provided by user
+        // 各ソルブタイプ用のカラーテーマバッジ
+        const TYPE_COLORS = {
+            '完全十字': { bg: 'bg-emerald-500/10', border: 'border-emerald-500/30', text: 'text-emerald-400' },
+            '完全一面': { bg: 'bg-teal-500/10', border: 'border-teal-500/30', text: 'text-teal-400' },
+            'F2L': { bg: 'bg-cyan-500/10', border: 'border-cyan-500/30', text: 'text-cyan-400' },
+            'OLL': { bg: 'bg-sky-500/10', border: 'border-sky-500/30', text: 'text-sky-400' },
+            'PLL(LBL)': { bg: 'bg-indigo-500/10', border: 'border-indigo-500/30', text: 'text-indigo-400' },
+            'PLL(CFOP)': { bg: 'bg-purple-500/10', border: 'border-purple-500/30', text: 'text-purple-400' },
+            '5x5x5': { bg: 'bg-pink-500/10', border: 'border-pink-500/30', text: 'text-pink-400' }
+        };
+
         const DEFAULT_URL = "https://sqknnxyumrbiunsllzcl.supabase.co";
         const DEFAULT_KEY = "sb_publishable_QKQjNX4H8SLKclkvH8zrUg_DQOeLl_I";
 
@@ -344,19 +461,17 @@
         const sectionRanking = document.getElementById('section-ranking');
 
         tabBtnPersonal.addEventListener('click', () => {
-            tabBtnPersonal.className = "pb-3 font-bold text-sm text-indigo-400 border-b-2 border-indigo-500 transition-colors";
-            tabBtnRanking.className = "pb-3 font-medium text-sm text-slate-400 border-b-2 border-transparent hover:text-slate-300 transition-colors";
+            tabBtnPersonal.className = "pb-3 font-bold text-sm text-indigo-400 border-b-2 border-indigo-500 transition-colors flex items-center space-x-2";
+            tabBtnRanking.className = "pb-3 font-medium text-sm text-slate-400 border-b-2 border-transparent hover:text-slate-300 transition-colors flex items-center space-x-2";
             sectionPersonal.classList.remove('hidden');
             sectionRanking.classList.add('hidden');
         });
 
         tabBtnRanking.addEventListener('click', () => {
-            tabBtnRanking.className = "pb-3 font-bold text-sm text-indigo-400 border-b-2 border-indigo-500 transition-colors";
-            tabBtnPersonal.className = "pb-3 font-medium text-sm text-slate-400 border-b-2 border-transparent hover:text-slate-300 transition-colors";
+            tabBtnRanking.className = "pb-3 font-bold text-sm text-indigo-400 border-b-2 border-indigo-500 transition-colors flex items-center space-x-2";
+            tabBtnPersonal.className = "pb-3 font-medium text-sm text-slate-400 border-b-2 border-transparent hover:text-slate-300 transition-colors flex items-center space-x-2";
             sectionRanking.classList.remove('hidden');
             sectionPersonal.classList.add('hidden');
-
-            // 初回表示時にランキングを取得
             fetchAndRenderRankings();
         });
 
@@ -373,7 +488,8 @@
             localStorage.setItem('sb_key', key);
             settingsModal.classList.add('hidden');
             supabaseClient = window.supabase.createClient(url, key);
-            rankingsFetched = false; // ランキングを再取得可能にする
+            rankingsFetched = false;
+            rankingRawSolves = [];
             loadActiveUsers();
             showNotification('接続設定を更新しました');
         });
@@ -397,7 +513,6 @@
 
         async function loadActiveUsers() {
             try {
-                // 1. .eq('isActive', true) を消して「全員分」取得する
                 const { data, error } = await supabaseClient
                     .from('users')
                     .select('*')
@@ -407,17 +522,14 @@
 
                 const selectElem = document.getElementById('user-select');
                 selectElem.innerHTML = '<option value="">-- ユーザーを選択してください --</option>';
-                userMap = {}; // マップをリセット
+                userMap = {};
 
                 if (data && data.length > 0) {
                     data.forEach(user => {
                         const userId = user.id || user.user_id || user.uid;
                         const userName = user.name || user.username || user.email || `User #${userId.toString().substring(0, 4)}`;
-
-                        // 2. IDと名前の紐付け（マップ）には「全員」保存する（ランキング用）
                         userMap[userId] = userName;
 
-                        // 3. プルダウンには isActive が true の人だけ追加する
                         if (user.isActive === true) {
                             const opt = document.createElement('option');
                             opt.value = userId;
@@ -434,95 +546,222 @@
             }
         }
 
-        async function fetchAndRenderRankings() {
-            if (rankingsFetched) return;
+        function getPeriodStartDate(period) {
+            const now = new Date();
+            if (period === 'today') {
+                const start = new Date(now);
+                start.setHours(0, 0, 0, 0);
+                return start;
+            }
+            if (period === 'week') {
+                const start = new Date(now);
+                const day = start.getDay(); // 0: 日曜, 1: 月曜
+                const diff = (day === 0 ? -6 : 1) - day; // 月曜日始まり
+                start.setDate(start.getDate() + diff);
+                start.setHours(0, 0, 0, 0);
+                return start;
+            }
+            if (period === 'month') {
+                return new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+            }
+            if (period === 'fiscal') {
+                // 日本の年度：4月1日〜翌年3月31日
+                const fiscalYear = now.getMonth() >= 3 ? now.getFullYear() : now.getFullYear() - 1;
+                return new Date(fiscalYear, 3, 1, 0, 0, 0, 0);
+            }
+            return null; // 'all'
+        }
 
-            const container = document.getElementById('ranking-grid');
-            container.innerHTML = '<div class="col-span-full text-center text-slate-400 py-12 flex flex-col items-center"><i data-lucide="loader-2" class="w-8 h-8 animate-spin mb-4 text-indigo-500"></i><p>ランキングを集計中...</p></div>';
-            lucide.createIcons();
+        function renderRankings() {
+            const mainContainer = document.getElementById('ranking-main-grid');
+            const subContainer = document.getElementById('ranking-sub-grid');
+            const startDate = getPeriodStartDate(selectedRankingPeriod);
 
-            try {
-                // クエリでの絞り込みエラーを防ぐため、まとめてデータを取得してJS側で集計する
-                const { data, error } = await supabaseClient
-                    .from('cube_solves')
-                    .select('*')
-                    .limit(50000); // 必要に応じて上限を調整
+            // 対象期間による絞り込み
+            let targetSolves = rankingRawSolves;
+            if (startDate) {
+                const startTime = startDate.getTime();
+                targetSolves = rankingRawSolves.filter(r => {
+                    if (!r.created_at) return false;
+                    return new Date(r.created_at).getTime() >= startTime;
+                });
+            }
 
-                if (error) throw error;
+            let mainHtml = '';
+            let subHtml = '';
 
-                const allSolves = data || [];
-                let html = '';
+            for (const solveType of SOLVE_TYPES) {
+                const userBests = {};
 
-                for (const solveType of SOLVE_TYPES) {
-                    // 各ソルブタイプごとにタイムが速い順に集計
-                    const userBests = {};
+                targetSolves.forEach(r => {
+                    const currentType = r.solve_type || r.type;
+                    if (currentType !== solveType) return;
 
-                    allSolves.forEach(r => {
-                        // 種別の判定
-                        const currentType = r.solve_type || r.type;
-                        if (currentType !== solveType) return;
+                    const uId = r.user_id;
+                    if (!uId) return;
 
-                        const uId = r.user_id;
-                        if (!uId) return;
+                    const t = extractSecondsFromRecord(r);
+                    if (t <= 0) return;
 
-                        const t = extractSecondsFromRecord(r);
-                        if (t <= 0) return;
+                    if (!userBests[uId] || t < userBests[uId]) {
+                        userBests[uId] = t;
+                    }
+                });
 
-                        // そのユーザーの過去のベストタイムより速ければ更新
-                        if (!userBests[uId] || t < userBests[uId]) {
-                            userBests[uId] = t;
-                        }
-                    });
+                const sortedRankings = Object.entries(userBests)
+                    .sort((a, b) => a[1] - b[1])
+                    .slice(0, 10);
 
-                    // ランキングトップ10を抽出 (タイムの昇順ソート)
-                    const sortedRankings = Object.entries(userBests)
-                        .sort((a, b) => a[1] - b[1])
-                        .slice(0, 10);
+                const colors = TYPE_COLORS[solveType] || { bg: 'bg-slate-700/30', border: 'border-slate-700', text: 'text-indigo-400' };
+                const isMain = (solveType === 'PLL(LBL)' || solveType === 'PLL(CFOP)');
 
-                    // カードのHTML生成
-                    html += `
-                        <div class="bg-slate-800/80 border border-slate-700/60 p-5 rounded-2xl shadow-sm backdrop-blur flex flex-col">
-                            <h3 class="font-bold text-lg text-white mb-4 flex items-center space-x-2">
-                                <i data-lucide="trophy" class="w-5 h-5 text-indigo-400"></i>
-                                <span>${solveType}</span>
-                            </h3>
-                            <div class="space-y-3 flex-1 flex flex-col ">
+                if (isMain) {
+                    mainHtml += `
+                        <div class="border-2 border-indigo-500/50 bg-gradient-to-b from-slate-800/95 to-slate-900/95 p-5 rounded-2xl shadow-xl backdrop-blur flex flex-col">
+                            <div class="flex items-center justify-between pb-3 mb-3 border-b border-indigo-500/30">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-3.5 h-3.5 rounded-full bg-indigo-500 shadow-sm shadow-indigo-500/50"></div>
+                                    <h3 class="font-extrabold text-xl text-white tracking-tight">${solveType}</h3>
+                                    <span class="text-xs bg-indigo-500/30 text-indigo-300 border border-indigo-500/40 px-2 py-0.5 rounded-md font-bold">MAIN</span>
+                                </div>
+                                <span class="text-xs text-indigo-300/80 font-mono">${sortedRankings.length}名エントリー</span>
+                            </div>
+
+                            <div class="space-y-1.5">
                     `;
 
                     if (sortedRankings.length === 0) {
-                        html += `<p class="text-sm text-slate-500 text-center py-4">まだ記録がありません</p>`;
+                        mainHtml += `<div class="text-slate-500 text-center py-8 text-sm">この期間の記録なし</div>`;
                     } else {
                         const medals = ['🥇', '🥈', '🥉'];
-                        const textColors = ['text-yellow-400', 'text-slate-300', 'text-amber-600'];
+                        const rankBg = ['bg-amber-500/10 border-amber-500/30', 'bg-slate-700/40 border-slate-600/50', 'bg-amber-700/10 border-amber-700/30'];
 
                         sortedRankings.forEach((rank, index) => {
                             const userId = rank[0];
                             const time = rank[1];
                             const defaultName = `User (${userId.toString().substring(0, 4)})`;
                             const userName = userMap[userId] || defaultName;
+                            const customBg = rankBg[index] || 'bg-slate-900/60 border-slate-700/40';
 
-                            html += `
-                                <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-900/60 border border-slate-700/30">
-                                    <div class="flex items-center space-x-3 truncate">
-                                        <span class="text-xl ${textColors[index] || ''}">${medals[index] || (index + 1 + '.')}</span>
-                                        <span class="font-medium text-slate-200 text-sm truncate max-w-[110px]" title="${userName}">${userName}</span>
+                            mainHtml += `
+                                <div class="flex items-center justify-between px-3.5 py-2 rounded-xl border ${customBg} text-sm transition-all hover:bg-slate-800 gap-3">
+                                    <div class="flex items-center space-x-3 min-w-0 flex-1">
+                                        <span class="text-base w-6 text-center shrink-0">${medals[index] || `<span class="text-xs font-mono text-slate-400 font-bold">${index + 1}</span>`}</span>
+                                        <span class="text-slate-200 font-semibold truncate flex-1" title="${userName}">${userName}</span>
                                     </div>
-                                    <span class="font-mono font-bold text-emerald-400 text-sm tracking-tight">${formatTime(time)}</span>
+                                    <span class="font-mono font-bold text-sm text-emerald-400 shrink-0 text-right">${formatTime(time)}</span>
                                 </div>
                             `;
                         });
                     }
-                    html += `</div></div>`;
-                }
 
-                container.innerHTML = html;
-                lucide.createIcons();
+                    mainHtml += `</div></div>`;
+                } else {
+                    subHtml += `
+                        <div class="${colors.border} bg-slate-800/70 p-4 rounded-2xl backdrop-blur flex flex-col hover:border-slate-500 transition-colors">
+                            <div class="flex items-center justify-between pb-2.5 mb-2.5 border-b border-slate-700/60">
+                                <div class="flex items-center space-x-2 truncate">
+                                    <span class="w-2.5 h-2.5 rounded-full ${colors.bg.replace('/10', '')} shrink-0"></span>
+                                    <h4 class="font-bold text-sm text-slate-200 truncate" title="${solveType}">${solveType}</h4>
+                                </div>
+                                <span class="text-xs text-slate-400 font-mono">${sortedRankings.length}名</span>
+                            </div>
+                            <div class="space-y-1.5 flex-1 flex flex-col">
+                    `;
+
+                    if (sortedRankings.length === 0) {
+                        subHtml += `<div class="text-xs text-slate-500 text-center py-6 flex-1 flex items-center justify-center">この期間の記録なし</div>`;
+                    } else {
+                        sortedRankings.forEach((rank, index) => {
+                            const userId = rank[0];
+                            const time = rank[1];
+                            const defaultName = `User (${userId.toString().substring(0, 4)})`;
+                            const userName = userMap[userId] || defaultName;
+
+                            subHtml += `
+                                <div class="flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-slate-900/60 border border-slate-700/30 text-xs gap-2 transition-colors hover:bg-slate-800">
+                                    <div class="flex items-center space-x-2 min-w-0 flex-1">
+                                        <span class="w-4 text-center text-slate-400 font-mono text-[11px] shrink-0">${index + 1}</span>
+                                        <span class="text-slate-200 font-medium truncate flex-1" title="${userName}">${userName}</span>
+                                    </div>
+                                    <span class="font-mono font-bold text-emerald-400 text-xs shrink-0 text-right">${formatTime(time)}</span>
+                                </div>
+                            `;
+                        });
+                    }
+                    subHtml += `</div></div>`;
+                }
+            }
+
+            mainContainer.innerHTML = mainHtml;
+            subContainer.innerHTML = subHtml;
+            lucide.createIcons();
+        }
+
+        async function fetchAndRenderRankings() {
+            if (rankingsFetched) {
+                renderRankings();
+                return;
+            }
+
+            const mainContainer = document.getElementById('ranking-main-grid');
+            const subContainer = document.getElementById('ranking-sub-grid');
+
+            mainContainer.innerHTML = '<div class="col-span-full text-center text-slate-400 py-24 flex flex-col items-center justify-center"><i data-lucide="loader-2" class="w-10 h-10 animate-spin mb-3 text-indigo-500"></i><p class="text-sm">ランキングを集計中...</p></div>';
+            subContainer.innerHTML = '';
+            lucide.createIcons();
+
+            try {
+                const { data, error } = await supabaseClient
+                    .from('cube_solves')
+                    .select('*')
+                    .limit(50000);
+
+                if (error) throw error;
+
+                rankingRawSolves = data || [];
                 rankingsFetched = true;
+                renderRankings();
             } catch (err) {
                 console.error(err);
-                container.innerHTML = `<div class="col-span-full text-center text-red-400 py-8">ランキングの取得に失敗しました: ${err.message}</div>`;
+                mainContainer.innerHTML = `<div class="col-span-full text-center text-red-400 py-8">ランキングの取得に失敗しました: ${err.message}</div>`;
             }
         }
+
+        // 期間ボタングループのクリックイベント
+        const periodLabels = {
+            'today': '今日',
+            'week': '今週',
+            'month': '今月',
+            'fiscal': '今年度',
+            'all': '全部'
+        };
+
+        document.querySelectorAll('#ranking-period-buttons .period-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const period = btn.getAttribute('data-period');
+                if (selectedRankingPeriod === period) return;
+
+                selectedRankingPeriod = period;
+
+                // ボタンのアクティブ状態を更新
+                document.querySelectorAll('#ranking-period-buttons .period-btn').forEach(b => {
+                    b.className = 'period-btn px-3 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-slate-200 transition-all';
+                });
+                btn.className = 'period-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white shadow-sm shadow-indigo-600/30 transition-all';
+
+                // タイトル横のバッジを更新
+                const badge = document.getElementById('ranking-period-badge');
+                if (badge) badge.innerText = periodLabels[period] || period;
+
+                // 即座にフィルタリングして再描画
+                if (rankingsFetched) {
+                    renderRankings();
+                } else {
+                    fetchAndRenderRankings();
+                }
+            });
+        });
 
         document.getElementById('user-select').addEventListener('change', (e) => {
             const userId = e.target.value;
@@ -555,10 +794,12 @@
                     showNotification('このユーザーの測定ログはまだありません。');
                     allUserRecordsOriginal = [];
                     allUserRecords = [];
+                    renderPersonalTypeCards();
                     initSlider();
                     return;
                 }
                 allUserRecordsOriginal = data;
+                renderPersonalTypeCards();
                 applyFilters();
 
             } catch (err) {
@@ -566,6 +807,79 @@
                 showNotification('測定ログの取得エラー: ' + err.message);
             }
         }
+
+        // 横長画面で各ソルブタイプの自己記録を横並びに一覧表示する関数
+        function renderPersonalTypeCards() {
+            const grid = document.getElementById('personal-types-grid');
+            if (!grid) return;
+
+            const currentSelectedType = document.getElementById('type-select').value;
+            let html = '';
+
+            SOLVE_TYPES.forEach(type => {
+                const typeSolves = allUserRecordsOriginal.filter(r => (r.solve_type || r.type) === type);
+                const count = typeSolves.length;
+                let best = '-';
+                let avg = '-';
+
+                if (count > 0) {
+                    const times = typeSolves.map(r => extractSecondsFromRecord(r)).filter(t => t > 0);
+                    if (times.length > 0) {
+                        best = formatTime(Math.min(...times));
+                        const sum = times.reduce((a, b) => a + b, 0);
+                        avg = formatTime(sum / times.length);
+                    }
+                }
+
+                const colors = TYPE_COLORS[type] || { bg: 'bg-indigo-500/10', border: 'border-slate-700', text: 'text-indigo-400' };
+                const isSelected = currentSelectedType === type;
+                const isHighlight = (type === 'PLL(LBL)' || type === 'PLL(CFOP)');
+                const colSpan = isHighlight ? 'xl:col-span-2' : 'xl:col-span-1';
+
+                let borderClass = isSelected
+                    ? 'ring-2 ring-indigo-400 border-indigo-400 bg-indigo-950/50'
+                    : (isHighlight
+                        ? 'border-indigo-500/40 bg-slate-800/95 ring-1 ring-indigo-500/20 hover:border-indigo-400'
+                        : `${colors.border} bg-slate-800/70 hover:bg-slate-700/60`);
+
+                html += `
+                    <div onclick="selectSolveTypeQuickly('${type}')" 
+                        class="${colSpan} p-3 rounded-xl border ${borderClass} shadow-sm backdrop-blur transition-all duration-150 cursor-pointer flex flex-col justify-between select-none">
+                        <div class="flex items-center justify-between mb-1.5">
+                            <div class="flex items-center space-x-1.5 truncate">
+                                <span class="font-bold ${isHighlight ? 'text-sm text-indigo-300' : 'text-xs ' + colors.text} truncate">${type}</span>
+                                ${isHighlight ? '<span class="text-[9px] bg-indigo-500/20 text-indigo-300 px-1 rounded font-semibold">MAIN</span>' : ''}
+                            </div>
+                            <span class="text-[10px] bg-slate-900/80 px-1.5 py-0.5 rounded font-mono text-slate-400">${count}回</span>
+                        </div>
+                        <div class="space-y-0.5">
+                            <div class="flex items-baseline justify-between">
+                                <span class="text-[10px] text-slate-400">BEST</span>
+                                <span class="font-mono font-bold ${isHighlight ? 'text-base' : 'text-sm'} text-emerald-400">${best}</span>
+                            </div>
+                            <div class="flex items-baseline justify-between">
+                                <span class="text-[10px] text-slate-400">AVG</span>
+                                <span class="font-mono text-xs text-slate-200">${avg}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            grid.innerHTML = html;
+        }
+
+        // カードクリックでソルブタイプ絞り込みを即時変更するヘルパー
+        window.selectSolveTypeQuickly = function (type) {
+            const select = document.getElementById('type-select');
+            if (select.value === type) {
+                select.value = ''; // 解除
+            } else {
+                select.value = type;
+            }
+            renderPersonalTypeCards();
+            applyFilters();
+        };
 
         function applyFilters() {
             const solveType = document.getElementById('type-select').value;
@@ -590,6 +904,7 @@
         }
 
         document.getElementById('type-select').addEventListener('change', () => {
+            renderPersonalTypeCards();
             const userId = document.getElementById('user-select').value;
             if (userId) applyFilters();
         });
@@ -600,8 +915,7 @@
             const record = allUserRecords[idx];
             if (!record || !record.created_at) return '----/--/--';
 
-            const d = new Date(record.created_at);
-            return `${d.getFullYear()}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getDate().toString().padStart(2, '0')}`;
+            return formatSliderDate(record.created_at);
         }
 
         function initSlider() {
@@ -685,13 +999,116 @@
         }
 
         function formatTime(seconds) {
-            if (isNaN(seconds) || seconds == null) return '-';
+            if (isNaN(seconds) || seconds == null || seconds <= 0) return '-';
             const mins = Math.floor(seconds / 60);
-            const secs = (seconds % 60).toFixed(2);
+            const remainingSecs = seconds % 60;
+            const secsStr = remainingSecs.toFixed(3);
             if (mins > 0) {
-                return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+                return `${mins}:${secsStr.padStart(6, '0')}`;
             }
-            return `${secs}s`;
+            return `${secsStr}s`;
+        }
+
+        // SupabaseのUTCタイムスタンプ文字列を確実にDateオブジェクトとして解釈
+        function parseUtcDate(raw) {
+            if (!raw) return null;
+            if (typeof raw === 'number' || (!isNaN(raw) && !isNaN(parseFloat(raw)))) {
+                const num = Number(raw);
+                const d = new Date(num > 1e11 ? num : num * 1000);
+                return isNaN(d.getTime()) ? null : d;
+            }
+            let str = String(raw).trim();
+            // タイムゾーン識別子(Zや+09:00など)がない場合は標準時(UTC)としてZを補完
+            if (!str.endsWith('Z') && !/[+-]\d{2}(:\d{2})?$/.test(str)) {
+                str = str.replace(' ', 'T') + 'Z';
+            }
+            const d = new Date(str);
+            return isNaN(d.getTime()) ? null : d;
+        }
+
+        // 日本時間（JST: Asia/Tokyo）の日時パーツ（年・月・日・曜・時・分・秒）を取得
+        function getJstParts(dateObj) {
+            if (!dateObj) return null;
+            const formatter = new Intl.DateTimeFormat('ja-JP', {
+                timeZone: 'Asia/Tokyo',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                weekday: 'short',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            });
+            const parts = formatter.formatToParts(dateObj);
+            const map = {};
+            parts.forEach(p => map[p.type] = p.value);
+            return map;
+        }
+
+        // ランキングのツールチップ等: 2026/09/21(月) 03:42:15 (JST)
+        function formatFullTimestamp(dateStr) {
+            const d = parseUtcDate(dateStr);
+            if (!d) return '日時記録なし';
+            const p = getJstParts(d);
+            if (!p) return '日時記録なし';
+            return `${p.year}/${p.month}/${p.day}(${p.weekday}) ${p.hour}:${p.minute}:${p.second}`;
+        }
+
+        // ログ一覧用: 9/21(月) 03:42 (JST)
+        function formatShortTimestamp(dateStr) {
+            const d = parseUtcDate(dateStr);
+            if (!d) return '-';
+            const p = getJstParts(d);
+            if (!p) return '-';
+            const m = parseInt(p.month, 10);
+            const day = parseInt(p.day, 10);
+            return `${m}/${day}(${p.weekday}) ${p.hour}:${p.minute}`;
+        }
+
+        // スライダー表示用: 2026/09/21(月) (JST)
+        function formatSliderDate(dateStr) {
+            const d = parseUtcDate(dateStr);
+            if (!d) return '----/--/--';
+            const p = getJstParts(d);
+            if (!p) return '----/--/--';
+            return `${p.year}/${p.month}/${p.day}(${p.weekday})`;
+        }
+
+        // 日本時間(JST)基準で各期間の開始タイムスタンプ(ms)を計算
+        function getPeriodStartDate(period) {
+            if (period === 'all') return null;
+            const now = new Date();
+            const p = getJstParts(now);
+            if (!p) return null;
+
+            const year = parseInt(p.year, 10);
+            const month = parseInt(p.month, 10);
+            const day = parseInt(p.day, 10);
+            const JST_OFFSET_MS = 9 * 60 * 60 * 1000;
+
+            if (period === 'today') {
+                // JSTの今日 00:00:00
+                return Date.UTC(year, month - 1, day, 0, 0, 0) - JST_OFFSET_MS;
+            }
+            if (period === 'week') {
+                // JSTの今週月曜日 00:00:00
+                const temp = new Date(Date.UTC(year, month - 1, day));
+                const dayOfWeek = temp.getUTCDay(); // 0: 日曜, 1: 月曜
+                const diff = (dayOfWeek === 0 ? -6 : 1) - dayOfWeek;
+                const mondayDate = new Date(temp.getTime() + diff * 86400000);
+                return Date.UTC(mondayDate.getUTCFullYear(), mondayDate.getUTCMonth(), mondayDate.getUTCDate(), 0, 0, 0) - JST_OFFSET_MS;
+            }
+            if (period === 'month') {
+                // JSTの今月1日 00:00:00
+                return Date.UTC(year, month - 1, 1, 0, 0, 0) - JST_OFFSET_MS;
+            }
+            if (period === 'fiscal') {
+                // 日本の年度：4月1日 00:00:00 (JST)
+                const fiscalYear = month >= 4 ? year : year - 1;
+                return Date.UTC(fiscalYear, 3, 1, 0, 0, 0) - JST_OFFSET_MS;
+            }
+            return null;
         }
 
         function extractSecondsFromRecord(r) {
@@ -702,6 +1119,151 @@
             if (isNaN(val)) return 0;
             if (val > 10000) return val / 1000;
             return val;
+        }
+
+        function renderRankings() {
+            const mainContainer = document.getElementById('ranking-main-grid');
+            const subContainer = document.getElementById('ranking-sub-grid');
+            const startTimestamp = getPeriodStartDate(selectedRankingPeriod);
+
+            // 日本時間基準の対象期間による絞り込み
+            let targetSolves = rankingRawSolves;
+            if (startTimestamp != null) {
+                targetSolves = rankingRawSolves.filter(r => {
+                    const rDate = parseUtcDate(r.created_at || r.createdAt || r.inserted_at || r.date || r.timestamp);
+                    if (!rDate) return false;
+                    return rDate.getTime() >= startTimestamp;
+                });
+            }
+
+            let mainHtml = '';
+            let subHtml = '';
+
+            for (const solveType of SOLVE_TYPES) {
+                const userBests = {};
+
+                targetSolves.forEach(r => {
+                    const currentType = r.solve_type || r.type;
+                    if (currentType !== solveType) return;
+
+                    const uId = r.user_id;
+                    if (!uId) return;
+
+                    const t = extractSecondsFromRecord(r);
+                    if (t <= 0) return;
+
+                    // ベストタイムとともに測定時のタイムスタンプを保持
+                    if (!userBests[uId] || t < userBests[uId].time) {
+                        userBests[uId] = { time: t, createdAt: r.created_at || r.createdAt || r.inserted_at || r.date };
+                    }
+                });
+
+                const sortedRankings = Object.entries(userBests)
+                    .sort((a, b) => a[1].time - b[1].time)
+                    .slice(0, 10);
+
+                const colors = TYPE_COLORS[solveType] || { bg: 'bg-slate-700/30', border: 'border-slate-700', text: 'text-indigo-400' };
+                const isMain = (solveType === 'PLL(LBL)' || solveType === 'PLL(CFOP)');
+
+                if (isMain) {
+                    mainHtml += `
+                        <div class="border-2 border-indigo-500/50 bg-gradient-to-b from-slate-800/95 to-slate-900/95 p-5 rounded-2xl shadow-xl backdrop-blur flex flex-col">
+                            <div class="flex items-center justify-between pb-3 mb-3 border-b border-indigo-500/30">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-3.5 h-3.5 rounded-full bg-indigo-500 shadow-sm shadow-indigo-500/50"></div>
+                                    <h3 class="font-extrabold text-xl text-white tracking-tight">${solveType}</h3>
+                                    <span class="text-xs bg-indigo-500/30 text-indigo-300 border border-indigo-500/40 px-2 py-0.5 rounded-md font-bold">MAIN</span>
+                                </div>
+                                <span class="text-xs text-indigo-300/80 font-mono">${sortedRankings.length}名エントリー</span>
+                            </div>
+
+                            <div class="space-y-1.5">
+                    `;
+
+                    if (sortedRankings.length === 0) {
+                        mainHtml += `<div class="text-slate-500 text-center py-8 text-sm">この期間の記録なし</div>`;
+                    } else {
+                        const medals = ['🥇', '🥈', '🥉'];
+                        const rankBg = ['bg-amber-500/10 border-amber-500/30', 'bg-slate-700/40 border-slate-600/50', 'bg-amber-700/10 border-amber-700/30'];
+
+                        sortedRankings.forEach((rank, index) => {
+                            const userId = rank[0];
+                            const time = rank[1].time;
+                            const createdAt = rank[1].createdAt;
+                            const formattedDate = formatFullTimestamp(createdAt);
+                            const defaultName = `User (${userId.toString().substring(0, 4)})`;
+                            const userName = userMap[userId] || defaultName;
+                            const customBg = rankBg[index] || 'bg-slate-900/60 border-slate-700/40';
+
+                            mainHtml += `
+                                <div class="group relative flex items-center justify-between px-3.5 py-2 rounded-xl border ${customBg} text-sm transition-all hover:bg-slate-800 gap-3 cursor-default"
+                                     title="記録日時: ${formattedDate}">
+                                    <div class="flex items-center space-x-3 min-w-0 flex-1">
+                                        <span class="text-base w-6 text-center shrink-0">${medals[index] || `<span class="text-xs font-mono text-slate-400 font-bold">${index + 1}</span>`}</span>
+                                        <span class="text-slate-200 font-semibold truncate flex-1" title="${userName}">${userName}</span>
+                                    </div>
+                                    <span class="font-mono font-bold text-sm text-emerald-400 shrink-0 text-right">${formatTime(time)}</span>
+
+                                    <!-- ホバー時に表示されるタイムスタンプツールチップ -->
+                                    <div class="pointer-events-none absolute -top-8 right-3 hidden group-hover:flex items-center space-x-1.5 z-30 bg-slate-950/95 text-slate-200 text-xs font-mono px-2.5 py-1 rounded-lg border border-slate-600 shadow-2xl whitespace-nowrap">
+                                        <span class="text-indigo-400">🕒</span>
+                                        <span>記録日時: ${formattedDate}</span>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                    }
+
+                    mainHtml += `</div></div>`;
+                } else {
+                    subHtml += `
+                        <div class="${colors.border} bg-slate-800/70 p-4 rounded-2xl backdrop-blur flex flex-col hover:border-slate-500 transition-colors">
+                            <div class="flex items-center justify-between pb-2.5 mb-2.5 border-b border-slate-700/60">
+                                <div class="flex items-center space-x-2 truncate">
+                                    <span class="w-2.5 h-2.5 rounded-full ${colors.bg.replace('/10', '')} shrink-0"></span>
+                                    <h4 class="font-bold text-sm text-slate-200 truncate" title="${solveType}">${solveType}</h4>
+                                </div>
+                                <span class="text-xs text-slate-400 font-mono">${sortedRankings.length}名</span>
+                            </div>
+                            <div class="space-y-1.5 flex-1 flex flex-col">
+                    `;
+
+                    if (sortedRankings.length === 0) {
+                        subHtml += `<div class="text-xs text-slate-500 text-center py-6 flex-1 flex items-center justify-center">この期間の記録なし</div>`;
+                    } else {
+                        sortedRankings.forEach((rank, index) => {
+                            const userId = rank[0];
+                            const time = rank[1].time;
+                            const createdAt = rank[1].createdAt;
+                            const formattedDate = formatFullTimestamp(createdAt);
+                            const defaultName = `User (${userId.toString().substring(0, 4)})`;
+                            const userName = userMap[userId] || defaultName;
+
+                            subHtml += `
+                                <div class="group relative flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-slate-900/60 border border-slate-700/30 text-xs gap-2 transition-colors hover:bg-slate-800 cursor-default"
+                                     title="記録日時: ${formattedDate}">
+                                    <div class="flex items-center space-x-2 min-w-0 flex-1">
+                                        <span class="w-4 text-center text-slate-400 font-mono text-[11px] shrink-0">${index + 1}</span>
+                                        <span class="text-slate-200 font-medium truncate flex-1" title="${userName}">${userName}</span>
+                                    </div>
+                                    <span class="font-mono font-bold text-emerald-400 text-xs shrink-0 text-right">${formatTime(time)}</span>
+
+                                    <!-- ホバー時に表示されるタイムスタンプツールチップ -->
+                                    <div class="pointer-events-none absolute -top-7 right-2 hidden group-hover:flex items-center space-x-1 z-30 bg-slate-950/95 text-slate-200 text-[10px] font-mono px-2 py-0.5 rounded-md border border-slate-600 shadow-xl whitespace-nowrap">
+                                        <span class="text-indigo-400">🕒</span>
+                                        <span>${formattedDate}</span>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                    }
+                    subHtml += `</div></div>`;
+                }
+            }
+
+            mainContainer.innerHTML = mainHtml;
+            subContainer.innerHTML = subHtml;
+            lucide.createIcons();
         }
 
         function renderDashboard() {
@@ -720,11 +1282,11 @@
                 return;
             }
 
-            const times = targetRecords.map(r => extractSecondsFromRecord(r));
+            const times = targetRecords.map(r => extractSecondsFromRecord(r)).filter(t => t > 0);
             const total = targetRecords.length;
 
-            const best = Math.min(...times);
-            const avg = times.reduce((a, b) => a + b, 0) / total;
+            const best = times.length > 0 ? Math.min(...times) : 0;
+            const avg = times.length > 0 ? times.reduce((a, b) => a + b, 0) / times.length : 0;
 
             let ao5 = '-';
             if (times.length >= 5) {
@@ -743,22 +1305,23 @@
             const tbody = document.getElementById('logs-tbody');
             tbody.innerHTML = '';
 
-            const recentRecords = [...targetRecords].reverse().slice(0, 20);
+            const recentRecords = [...targetRecords].reverse().slice(0, 30);
             recentRecords.forEach(r => {
-                const dateStr = r.created_at ? new Date(r.created_at).toLocaleString('ja-JP') : '-';
+                const rawDate = r.created_at || r.createdAt || r.inserted_at || r.date;
+                const dateStr = formatShortTimestamp(rawDate);
                 const timeSeconds = extractSecondsFromRecord(r);
                 const timeVal = formatTime(timeSeconds);
                 const rType = r.solve_type || r.type || '-';
 
                 const tr = document.createElement('tr');
-                tr.className = 'hover:bg-slate-700/30 transition-colors';
+                tr.className = 'hover:bg-slate-700/40 transition-colors';
                 tr.innerHTML = `
-                    <td class="px-6 py-4 text-slate-300 text-xs">${dateStr}</td>
-                    <td class="px-6 py-4 font-mono font-bold text-white flex flex-col">
-                        <span>${timeVal}</span>
-                        <span class="text-[10px] text-slate-500 font-normal">#${r.globalIndex}回目</span>
+                    <td class="px-4 py-2.5 text-slate-400 font-mono text-[11px]">${dateStr}</td>
+                    <td class="px-4 py-2.5 font-mono font-bold text-white">
+                        <span class="text-xs text-emerald-400">${timeVal}</span>
+                        <span class="text-[10px] text-slate-500 font-normal ml-1">#${r.globalIndex}</span>
                     </td>
-                    <td class="px-6 py-4 text-slate-400 text-xs truncate max-w-xs">${rType}</td>
+                    <td class="px-4 py-2.5 text-slate-300 text-[11px] truncate max-w-[90px]">${rType}</td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -772,7 +1335,7 @@
             document.getElementById('stat-best').innerText = '-';
             document.getElementById('stat-avg').innerText = '-';
             document.getElementById('stat-ao5').innerText = '-';
-            document.getElementById('logs-tbody').innerHTML = `<tr><td colspan="3" class="px-6 py-8 text-center text-slate-500">データがありません</td></tr>`;
+            document.getElementById('logs-tbody').innerHTML = `<tr><td colspan="3" class="px-4 py-8 text-center text-slate-500">データがありません</td></tr>`;
             if (chartInstance) chartInstance.destroy();
         }
 
@@ -790,28 +1353,38 @@
                         label: 'タイム (秒)',
                         data: data,
                         borderColor: '#818cf8',
-                        backgroundColor: 'rgba(129, 140, 248, 0.1)',
+                        backgroundColor: 'rgba(129, 140, 248, 0.08)',
                         borderWidth: 2,
-                        pointRadius: 3,
+                        pointRadius: labels.length > 50 ? 0 : 3,
+                        pointHoverRadius: 5,
                         pointBackgroundColor: '#818cf8',
                         fill: true,
-                        tension: 0.1
+                        tension: 0.15
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: { display: false }
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => `タイム: ${formatTime(context.parsed.y)}`
+                            }
+                        }
                     },
                     scales: {
                         x: {
-                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                            ticks: { color: '#94a3b8', font: { size: 11 } }
+                            grid: { color: 'rgba(255, 255, 255, 0.03)' },
+                            ticks: { color: '#94a3b8', font: { size: 10 }, maxTicksLimit: 15 }
                         },
                         y: {
                             grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                            ticks: { color: '#94a3b8', font: { size: 11 } }
+                            ticks: {
+                                color: '#94a3b8',
+                                font: { size: 10 },
+                                callback: (val) => formatTime(val)
+                            }
                         }
                     }
                 }
