@@ -573,6 +573,7 @@
         }
 
         function renderRankings() {
+            console.log('randerranking()');
             const mainContainer = document.getElementById('ranking-main-grid');
             const subContainer = document.getElementById('ranking-sub-grid');
             const startDate = getPeriodStartDate(selectedRankingPeriod);
@@ -715,6 +716,7 @@
                 const { data, error } = await supabaseClient
                     .from('cube_solves')
                     .select('*')
+                    .order('created_at', { ascending: false }) // 日時が新しい順（降順）
                     .limit(50000);
 
                 if (error) throw error;
@@ -755,6 +757,7 @@
                 if (badge) badge.innerText = periodLabels[period] || period;
 
                 // 即座にフィルタリングして再描画
+                console.log(rankingsFetched);
                 if (rankingsFetched) {
                     renderRankings();
                 } else {
