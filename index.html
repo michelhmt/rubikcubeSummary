@@ -717,7 +717,7 @@
                     .from('cube_solves')
                     .select('*')
                     .order('created_at', { ascending: false }) // 日時が新しい順（降順）
-                    .limit(50000);
+                    .limit(100000);
 
                 if (error) throw error;
 
